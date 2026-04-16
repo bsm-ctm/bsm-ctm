@@ -701,7 +701,13 @@ async function confirmLogin() {
     });
     if (!r.ok) throw new Error('Token inválido');
     const user = await r.json();
-    if (user.login !== GH_OWNER) throw new Error(`Token não pertence ao usuário ${GH_OWNER}`);
+
+    // verifica se o usuário tem acesso ao repositório
+    const repoCheck = await fetch(`${API_BASE}`, {
+      headers: { Authorization: `token ${token}` }
+    });
+    if (!repoCheck.ok) throw new Error('Token não tem acesso ao repositório bsm-ctm');
+
     ghToken = token;
     sessionStorage.setItem('bsm_token', token);
     isAdmin = true;
@@ -1052,10 +1058,9 @@ function toast(msg, type = '') {
 // INIT
 // ══════════════════════════════════════════════════
 if (ghToken) {
-  fetch('https://api.github.com/user', { headers: { Authorization: `token ${ghToken}` } })
-    .then(r => r.ok ? r.json() : null)
-    .then(user => {
-      if (user?.login === GH_OWNER) {
+  fetch(`${API_BASE}`, { headers: { Authorization: `token ${ghToken}` } })
+    .then(r => {
+      if (r.ok) {
         isAdmin = true;
         document.getElementById('adminBadge').classList.add('show');
         document.getElementById('loginBtn').style.display = 'none';
