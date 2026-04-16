@@ -314,7 +314,10 @@ header{height:var(--h);background:var(--header);display:flex;align-items:center;
       </div>
       <div class="form-group">
         <label class="form-label">Cor</label>
+        <div style="font-size:10px;color:var(--muted);margin-bottom:4px;letter-spacing:0.5px">BAIRROS / CAMADAS</div>
         <div class="color-row" id="addColorRow"></div>
+        <div style="font-size:10px;color:var(--muted);margin:10px 0 4px;letter-spacing:0.5px">ZONEAMENTO / PLANO DIRETOR</div>
+        <div class="color-row" id="addColorRowZone"></div>
       </div>
     </div>
     <div class="modal-footer">
@@ -339,7 +342,10 @@ header{height:var(--h);background:var(--header);display:flex;align-items:center;
       </div>
       <div class="form-group">
         <label class="form-label">Cor</label>
+        <div style="font-size:10px;color:var(--muted);margin-bottom:4px;letter-spacing:0.5px">BAIRROS / CAMADAS</div>
         <div class="color-row" id="editColorRow"></div>
+        <div style="font-size:10px;color:var(--muted);margin:10px 0 4px;letter-spacing:0.5px">ZONEAMENTO / PLANO DIRETOR</div>
+        <div class="color-row" id="editColorRowZone"></div>
         <div style="display:flex;align-items:center;gap:8px;margin-top:8px">
           <label class="form-label" style="margin:0;white-space:nowrap">Personalizada</label>
           <input type="color" id="editColorCustom" style="height:30px;width:50px;border:1px solid var(--border);border-radius:4px;cursor:pointer;padding:2px"/>
@@ -393,13 +399,24 @@ header{height:var(--h);background:var(--header);display:flex;align-items:center;
 // ══════════════════════════════════════════════════
 // CONFIG — repositório GitHub
 // ══════════════════════════════════════════════════
-const GH_OWNER = 'rufbarbosa-dev';
+const GH_OWNER = 'bsm-ctm';
 const GH_REPO  = 'bsm-ctm';
 const GH_BRANCH = 'main';
 const RAW_BASE = `https://raw.githubusercontent.com/${GH_OWNER}/${GH_REPO}/${GH_BRANCH}`;
 const API_BASE = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}`;
 
-const COLORS = ['#5b52c4','#1a7a4a','#c47d1a','#c0392b','#2980b9','#8e44ad','#16a085','#d35400','#2c3e50','#c9993a'];
+const COLORS = [
+  // Bairros — tons distintos
+  '#5b52c4','#1a7a4a','#c47d1a','#c0392b','#2980b9',
+  '#8e44ad','#16a085','#d35400','#2c3e50','#c9993a',
+  '#27ae60','#e74c3c','#1abc9c','#f39c12','#6c3483',
+  '#0e6655','#784212','#1f618d','#922b21','#117a65',
+  // Zoneamento Plano Diretor — tons pastéis identificáveis
+  '#a8d5a2','#f4a261','#e9c46a','#264653','#2a9d8f',
+  '#e76f51','#457b9d','#a8dadc','#f1faee','#d4e09b',
+  '#b5ead7','#ffdac1','#ff9aa2','#c7ceea','#e2f0cb',
+  '#b5d5c5','#ffc8a2','#d5aaff','#ffe5b4','#c1e1c1',
+];
 
 // ══════════════════════════════════════════════════
 // ESTADO
@@ -723,10 +740,14 @@ function openAddModal() {
   document.getElementById('addError').classList.remove('show');
   document.getElementById('progressWrap').classList.remove('show');
   document.getElementById('btnAddConfirm').classList.remove('ready');
-  addSelectedColor = COLORS[layersConfig.length % COLORS.length];
-  document.getElementById('addColorRow').innerHTML = COLORS.map(c =>
-    `<div class="color-opt${c===addSelectedColor?' sel':''}" style="background:${c}" onclick="addSelColor('${c}')"></div>`
-  ).join('');
+  addSelectedColor = COLORS[layersConfig.length % 20];
+  const renderColorGroup = (containerId, colors) => {
+    document.getElementById(containerId).innerHTML = colors.map(c =>
+      `<div class="color-opt${c===addSelectedColor?' sel':''}" style="background:${c}" onclick="addSelColor('${c}')"></div>`
+    ).join('');
+  };
+  renderColorGroup('addColorRow', COLORS.slice(0, 20));
+  renderColorGroup('addColorRowZone', COLORS.slice(20));
   document.getElementById('addModal').classList.add('open');
 }
 
@@ -734,7 +755,7 @@ function closeAddModal() { document.getElementById('addModal').classList.remove(
 
 function addSelColor(c) {
   addSelectedColor = c;
-  document.querySelectorAll('#addColorRow .color-opt').forEach(el => {
+  document.querySelectorAll('#addColorRow .color-opt, #addColorRowZone .color-opt').forEach(el => {
     el.classList.toggle('sel', el.getAttribute('onclick') === `addSelColor('${c}')`);
   });
 }
@@ -830,9 +851,13 @@ function openEditModal(nome) {
   document.getElementById('editWeightVal').textContent = wt + 'px';
   document.getElementById('editColorCustom').value = cfg.cor;
   editSelectedColor = cfg.cor;
-  document.getElementById('editColorRow').innerHTML = COLORS.map(c =>
-    `<div class="color-opt${c===cfg.cor?' sel':''}" style="background:${c}" onclick="editSelColor('${c}')"></div>`
-  ).join('');
+  const renderEditColors = (containerId, colors) => {
+    document.getElementById(containerId).innerHTML = colors.map(c =>
+      `<div class="color-opt${c===cfg.cor?' sel':''}" style="background:${c}" onclick="editSelColor('${c}')"></div>`
+    ).join('');
+  };
+  renderEditColors('editColorRow', COLORS.slice(0, 20));
+  renderEditColors('editColorRowZone', COLORS.slice(20));
   document.getElementById('editModal').classList.add('open');
 }
 
@@ -841,7 +866,7 @@ function closeEditModal() { document.getElementById('editModal').classList.remov
 function editSelColor(c) {
   editSelectedColor = c;
   document.getElementById('editColorCustom').value = c;
-  document.querySelectorAll('#editColorRow .color-opt').forEach(el =>
+  document.querySelectorAll('#editColorRow .color-opt, #editColorRowZone .color-opt').forEach(el =>
     el.classList.toggle('sel', el.getAttribute('onclick') === `editSelColor('${c}')`));
 }
 
